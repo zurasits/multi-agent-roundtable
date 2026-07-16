@@ -6,7 +6,7 @@ import uuid
 # Ensure backend can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step
+from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step, get_next_agent
 from src.backend.demo_loader import load_demo_transcript
 
 # Page Configuration
@@ -139,7 +139,15 @@ else:
 # Place the auto-trigger logic here, right before chat input, but after drawing messages
 if st.session_state.get("pending_agent_step", False):
     st.session_state.pending_agent_step = False
-    with st.spinner("🤖 Ein Agent denkt nach..."):
+    
+    # Predict who will answer next to personalize the spinner
+    next_agent = get_next_agent(st.session_state.session_id)
+    if next_agent:
+        spinner_text = f"🤖 {next_agent.role} {next_agent.name} denkt nach..."
+    else:
+        spinner_text = "🤖 Ein Agent denkt nach..."
+        
+    with st.spinner(spinner_text):
         trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
     st.rerun()
 

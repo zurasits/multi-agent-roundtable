@@ -20,14 +20,12 @@ def submit_message(session_id: str, agent_id: str, content: str) -> None:
     )
     add_message(msg)
 
-def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
+def get_next_agent(session_id: str):
     agents = get_all_agents()
     if not agents:
-        return
+        return None
         
     messages = get_session_messages(session_id)
-    
-    # Round-Robin Agent Selection
     # Sort agents alphabetically so Alice is consistently first
     agents = sorted(agents, key=lambda a: a.name)
     
@@ -36,17 +34,22 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
     if len(agent_messages) <= 1:
         # If no agents have spoken, or ONLY the auto-generated welcome message exists, 
         # let the first agent (Alice) speak to answer the user's first prompt!
-        agent = agents[0]
+        return agents[0]
     else:
         # Normal Round-Robin based on the last speaking agent
         last_agent_id = agent_messages[-1].agent_id
         try:
             idx = next(i for i, a in enumerate(agents) if a.id == last_agent_id)
-            agent = agents[(idx + 1) % len(agents)]
+            return agents[(idx + 1) % len(agents)]
         except StopIteration:
-            agent = agents[0]
+            return agents[0]
+
+def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
+    agent = get_next_agent(session_id)
+    if not agent:
+        return
     
-    if live_mode:
+    agents = get_all_agents()
         # Fast lookup for agent names
         agents_dict = {a.id: a.name for a in agents}
         
