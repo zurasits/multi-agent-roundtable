@@ -20,7 +20,7 @@ def submit_message(session_id: str, agent_id: str, content: str) -> None:
     )
     add_message(msg)
 
-def get_next_agent(session_id: str):
+def get_next_agent(session_id: str, is_user_reply: bool = False):
     agents = get_all_agents()
     if not agents:
         return None
@@ -31,9 +31,26 @@ def get_next_agent(session_id: str):
     
     agent_messages = [m for m in messages if m.agent_id != "live_user"]
     
+    # Intelligent Routing if the user just submitted a message
+    if is_user_reply and messages:
+        last_msg = messages[-1]
+        if last_msg.agent_id == "live_user":
+            text = last_msg.content.lower()
+            # 1. Direct mention routing (e.g., "Alice, what do you think?")
+            for a in agents:
+                if a.name.lower() in text:
+                    return a
+            
+            # 2. Conversation continuation routing (reply to the last speaking agent)
+            if agent_messages:
+                last_agent_id = agent_messages[-1].agent_id
+                for a in agents:
+                    if a.id == last_agent_id:
+                        return a
+
+    # 3. Default Round-Robin Selection (for manual triggers)
     if len(agent_messages) <= 1:
-        # If no agents have spoken, or ONLY the auto-generated welcome message exists, 
-        # let the first agent (Alice) speak to answer the user's first prompt!
+        # If no agents have spoken, or ONLY the auto-generated welcome message exists
         return agents[0]
     else:
         # Normal Round-Robin based on the last speaking agent
@@ -44,8 +61,8 @@ def get_next_agent(session_id: str):
         except StopIteration:
             return agents[0]
 
-def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
-    agent = get_next_agent(session_id)
+def trigger_roundtable_step(session_id: str, live_mode: bool = False, is_user_reply: bool = False) -> None:
+    agent = get_next_agent(session_id, is_user_reply)
     if not agent:
         return
     

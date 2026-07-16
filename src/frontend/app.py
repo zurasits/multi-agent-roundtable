@@ -100,6 +100,7 @@ live_mode = st.session_state.live_mode
 
 if st.sidebar.button("Trigger Next Agent Turn"):
     st.session_state.pending_agent_step = True
+    st.session_state.is_user_reply = False
     st.rerun()
 
 if st.sidebar.button("Reset Discussion"):
@@ -138,17 +139,19 @@ else:
 # Message Injection
 # Place the auto-trigger logic here, right before chat input, but after drawing messages
 if st.session_state.get("pending_agent_step", False):
+    is_user_reply = st.session_state.get("is_user_reply", False)
     st.session_state.pending_agent_step = False
+    st.session_state.is_user_reply = False
     
     # Predict who will answer next to personalize the spinner
-    next_agent = get_next_agent(st.session_state.session_id)
+    next_agent = get_next_agent(st.session_state.session_id, is_user_reply)
     if next_agent:
         spinner_text = f"🤖 {next_agent.role} {next_agent.name} denkt nach..."
     else:
         spinner_text = "🤖 Ein Agent denkt nach..."
         
     with st.spinner(spinner_text):
-        trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
+        trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode, is_user_reply=is_user_reply)
     st.rerun()
 
 user_input = st.chat_input("Type a message to inject into the roundtable...")
@@ -156,4 +159,5 @@ if user_input:
     submit_message(st.session_state.session_id, "live_user", user_input)
     # Tell Streamlit to trigger the agent AFTER drawing the user message on the next run
     st.session_state.pending_agent_step = True
+    st.session_state.is_user_reply = True
     st.rerun()
