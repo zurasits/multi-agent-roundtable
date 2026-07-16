@@ -115,4 +115,6 @@ else:
 user_input = st.chat_input("Type a message to inject into the roundtable...")
 if user_input:
     submit_message(st.session_state.session_id, "live_user", user_input)
+    # Automatically trigger an agent to respond to the user's message
+    trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
     st.rerun()
