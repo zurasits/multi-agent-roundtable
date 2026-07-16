@@ -29,4 +29,22 @@ class LiveAgentClient:
             )
             return response.text
         except Exception as e:
-            return f"[Live Client Fehler] {str(e)}"
+            # Fallback for high demand / rate limits
+            try:
+                response = self.client.models.generate_content(
+                    model='gemini-3.1-flash-lite',
+                    contents=prompt,
+                )
+                return response.text
+            except Exception as e2:
+                err_str = str(e2)
+                # Parse out the clean error message to hide JSON from user
+                if "'message': '" in err_str:
+                    start = err_str.find("'message': '") + 12
+                    end = err_str.find("'", start)
+                    if end > start:
+                        clean_msg = err_str[start:end]
+                        return f"[System-Hinweis] {clean_msg}"
+                
+                # Default friendly error if parsing fails
+                return "[System-Hinweis] Das KI-Modell ist temporär überlastet. Bitte versuchen Sie es in wenigen Sekunden erneut."
