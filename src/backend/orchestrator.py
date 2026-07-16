@@ -36,9 +36,10 @@ def get_next_agent(session_id: str, is_user_reply: bool = False):
         last_msg = messages[-1]
         if last_msg.agent_id == "live_user":
             text = last_msg.content.lower()
-            # 1. Direct mention routing (e.g., "Alice, what do you think?")
+            # 1. Direct mention routing (e.g., "@Alice, what do you think?")
             for a in agents:
-                if a.name.lower() in text:
+                # We enforce the @ symbol so normal name mentions in text don't accidentally route
+                if f"@{a.name.lower()}" in text:
                     return a
             
             # 2. Conversation continuation routing (reply to the last speaking agent)
