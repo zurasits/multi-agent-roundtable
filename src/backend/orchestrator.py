@@ -24,11 +24,31 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
     agents = get_all_agents()
     if not agents:
         return
-    agent = random.choice(agents)
+        
+    messages = get_session_messages(session_id)
+    
+    # Round-Robin Agent Selection
+    # Sort agents alphabetically so Alice is consistently first
+    agents = sorted(agents, key=lambda a: a.name)
+    
+    last_agent_id = None
+    for m in reversed(messages):
+        if m.agent_id != "live_user":
+            last_agent_id = m.agent_id
+            break
+            
+    if not last_agent_id:
+        # No agent has spoken yet, pick the first one
+        agent = agents[0]
+    else:
+        # Pick the next agent in the list
+        try:
+            idx = next(i for i, a in enumerate(agents) if a.id == last_agent_id)
+            agent = agents[(idx + 1) % len(agents)]
+        except StopIteration:
+            agent = agents[0]
     
     if live_mode:
-        # Construct history
-        messages = get_session_messages(session_id)
         # Fast lookup for agent names
         agents_dict = {a.id: a.name for a in agents}
         
