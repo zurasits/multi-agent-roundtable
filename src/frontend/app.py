@@ -112,9 +112,16 @@ else:
             st.markdown(f"**{name}**: {clean_content}")
 
 # Message Injection
+# Place the auto-trigger logic here, right before chat input, but after drawing messages
+if st.session_state.get("pending_agent_step", False):
+    st.session_state.pending_agent_step = False
+    with st.spinner("🤖 Ein Agent denkt nach..."):
+        trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
+    st.rerun()
+
 user_input = st.chat_input("Type a message to inject into the roundtable...")
 if user_input:
     submit_message(st.session_state.session_id, "live_user", user_input)
-    # Automatically trigger an agent to respond to the user's message
-    trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
+    # Tell Streamlit to trigger the agent AFTER drawing the user message on the next run
+    st.session_state.pending_agent_step = True
     st.rerun()
