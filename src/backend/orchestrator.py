@@ -31,17 +31,15 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
     # Sort agents alphabetically so Alice is consistently first
     agents = sorted(agents, key=lambda a: a.name)
     
-    last_agent_id = None
-    for m in reversed(messages):
-        if m.agent_id != "live_user":
-            last_agent_id = m.agent_id
-            break
-            
-    if not last_agent_id:
-        # No agent has spoken yet, pick the first one
+    agent_messages = [m for m in messages if m.agent_id != "live_user"]
+    
+    if len(agent_messages) <= 1:
+        # If no agents have spoken, or ONLY the auto-generated welcome message exists, 
+        # let the first agent (Alice) speak to answer the user's first prompt!
         agent = agents[0]
     else:
-        # Pick the next agent in the list
+        # Normal Round-Robin based on the last speaking agent
+        last_agent_id = agent_messages[-1].agent_id
         try:
             idx = next(i for i, a in enumerate(agents) if a.id == last_agent_id)
             agent = agents[(idx + 1) % len(agents)]

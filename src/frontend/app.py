@@ -80,7 +80,23 @@ st.sidebar.info(f"**Session ID:**\n`{st.session_state.session_id}`")
 
 # Sidebar Controls
 st.sidebar.subheader("Controls")
-live_mode = st.sidebar.toggle("Live KI-Modus (Gemini)", value=False, help="Schaltet um zwischen lokaler Demo und echter KI-Generierung via Google Gemini.")
+if "live_mode" not in st.session_state:
+    st.session_state.live_mode = False
+
+new_live_mode = st.sidebar.toggle("Live KI-Modus (Gemini)", value=st.session_state.live_mode, help="Schaltet um zwischen lokaler Demo und echter KI-Generierung via Google Gemini.")
+
+if new_live_mode != st.session_state.live_mode:
+    st.session_state.live_mode = new_live_mode
+    # Reset discussion when mode changes
+    st.session_state.session_id = str(uuid.uuid4())
+    sorted_agents = sorted(agents, key=lambda a: a.name)
+    if sorted_agents:
+        alice = sorted_agents[0]
+        greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
+        submit_message(st.session_state.session_id, alice.id, greeting)
+    st.rerun()
+
+live_mode = st.session_state.live_mode
 
 if st.sidebar.button("Trigger Next Agent Turn"):
     st.session_state.pending_agent_step = True
