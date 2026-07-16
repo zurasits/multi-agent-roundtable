@@ -50,6 +50,9 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False) -> None:
         return
     
     agents = get_all_agents()
+    
+    if live_mode:
+        messages = get_session_messages(session_id)
         # Fast lookup for agent names
         agents_dict = {a.id: a.name for a in agents}
         
