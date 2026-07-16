@@ -80,8 +80,10 @@ st.sidebar.info(f"**Session ID:**\n`{st.session_state.session_id}`")
 
 # Sidebar Controls
 st.sidebar.subheader("Controls")
+live_mode = st.sidebar.toggle("Live KI-Modus (Gemini)", value=False, help="Schaltet um zwischen lokaler Demo und echter KI-Generierung via Google Gemini.")
+
 if st.sidebar.button("Trigger Next Agent Turn"):
-    trigger_roundtable_step(st.session_state.session_id)
+    trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode)
     st.rerun()
 
 if st.sidebar.button("Reset Discussion"):
