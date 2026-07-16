@@ -46,12 +46,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Generate or retrieve session ID
+# Generate or retrieve session ID and initialize state
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
-    # Load default transcript for new session
-    demo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../demo_data/transcript_001.json")
-    load_demo_transcript(st.session_state.session_id, demo_path)
+    st.session_state.live_mode = True  # Default to Live Mode
+    
+    # Inject an automatic welcome message from Alice
+    agents_for_init = get_agents()
+    sorted_agents = sorted(agents_for_init, key=lambda a: a.name)
+    if sorted_agents:
+        alice = sorted_agents[0]
+        greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
+        submit_message(st.session_state.session_id, alice.id, greeting)
 
 # Header Section
 st.title("🤖 Multi-Agent Roundtable")
@@ -81,7 +87,7 @@ st.sidebar.info(f"**Session ID:**\n`{st.session_state.session_id}`")
 # Sidebar Controls
 st.sidebar.subheader("Controls")
 if "live_mode" not in st.session_state:
-    st.session_state.live_mode = False
+    st.session_state.live_mode = True
 
 new_live_mode = st.sidebar.toggle("Live KI-Modus (Gemini)", value=st.session_state.live_mode, help="Schaltet um zwischen lokaler Demo und echter KI-Generierung via Google Gemini.")
 
@@ -89,11 +95,17 @@ if new_live_mode != st.session_state.live_mode:
     st.session_state.live_mode = new_live_mode
     # Reset discussion when mode changes
     st.session_state.session_id = str(uuid.uuid4())
-    sorted_agents = sorted(agents, key=lambda a: a.name)
-    if sorted_agents:
-        alice = sorted_agents[0]
-        greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
-        submit_message(st.session_state.session_id, alice.id, greeting)
+    
+    if new_live_mode:
+        sorted_agents = sorted(agents, key=lambda a: a.name)
+        if sorted_agents:
+            alice = sorted_agents[0]
+            greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
+            submit_message(st.session_state.session_id, alice.id, greeting)
+    else:
+        demo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../demo_data/transcript_001.json")
+        load_demo_transcript(st.session_state.session_id, demo_path)
+        
     st.rerun()
 
 live_mode = st.session_state.live_mode
@@ -107,12 +119,16 @@ if st.sidebar.button("Reset Discussion"):
     # Regenerate session ID to get a fresh discussion state
     st.session_state.session_id = str(uuid.uuid4())
     
-    # Inject an automatic welcome message from Alice (the first agent)
-    sorted_agents = sorted(agents, key=lambda a: a.name)
-    if sorted_agents:
-        alice = sorted_agents[0]
-        greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
-        submit_message(st.session_state.session_id, alice.id, greeting)
+    if live_mode:
+        # Inject an automatic welcome message from Alice (the first agent)
+        sorted_agents = sorted(agents, key=lambda a: a.name)
+        if sorted_agents:
+            alice = sorted_agents[0]
+            greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
+            submit_message(st.session_state.session_id, alice.id, greeting)
+    else:
+        demo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../demo_data/transcript_001.json")
+        load_demo_transcript(st.session_state.session_id, demo_path)
         
     st.rerun()
 
