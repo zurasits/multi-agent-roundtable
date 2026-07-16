@@ -89,6 +89,14 @@ if st.sidebar.button("Trigger Next Agent Turn"):
 if st.sidebar.button("Reset Discussion"):
     # Regenerate session ID to get a fresh discussion state
     st.session_state.session_id = str(uuid.uuid4())
+    
+    # Inject an automatic welcome message from Alice (the first agent)
+    sorted_agents = sorted(agents, key=lambda a: a.name)
+    if sorted_agents:
+        alice = sorted_agents[0]
+        greeting = f"Hallo! Ich bin {alice.name} ({alice.role}). Welches Thema sollen wir heute diskutieren?"
+        submit_message(st.session_state.session_id, alice.id, greeting)
+        
     st.rerun()
 
 # Discussion transcript
