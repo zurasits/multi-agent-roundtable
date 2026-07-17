@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+.env
+roundtable.db
+.DS_Store.google/
