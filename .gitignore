@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .env
 roundtable.db
-.DS_Store.google/
+.DS_Store
+.google/
