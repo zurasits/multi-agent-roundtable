@@ -51,5 +51,29 @@ class TestLiveClientFallback(unittest.TestCase):
             client._generate_gemini.assert_not_called()
             self.assertEqual(response, "gpt_response")
 
+    @patch('src.backend.live_client.os.getenv')
+    def test_transcribe_audio_uses_gemini(self, mock_getenv):
+        # Mock GEMINI_API_KEY
+        def getenv_side_effect(key, default=""):
+            if key == "GEMINI_API_KEY": return "dummy_gemini_key"
+            return ""
+        mock_getenv.side_effect = getenv_side_effect
+        
+        with patch('src.backend.live_client.genai.Client') as MockGenaiClient:
+            client = LiveAgentClient()
+            
+            # Wir erstellen einen Mock für die API Response
+            mock_response = MagicMock()
+            mock_response.text = "Das ist ein Test."
+            client.gemini_client.models.generate_content.return_value = mock_response
+            
+            audio_bytes = b"fake_audio_data"
+            result = client.transcribe_audio(audio_bytes)
+            
+            # Verifizieren, dass Gemini aufgerufen wurde
+            client.gemini_client.models.generate_content.assert_called_once()
+            self.assertEqual(result, "Das ist ein Test.")
+
 if __name__ == '__main__':
     unittest.main()
+

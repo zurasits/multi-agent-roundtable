@@ -112,3 +112,50 @@ class LiveAgentClient:
                         clean_msg = err_str[start:end]
                         return f"[System] {clean_msg}"
                 return "[System] The AI model is temporarily overloaded. Please try again in a few seconds."
+
+    def transcribe_audio(self, audio_bytes: bytes) -> str:
+        """Transcribes audio bytes to text using Google Gemini."""
+        if not self.gemini_client:
+            return "[System] Cannot transcribe audio. No GEMINI_API_KEY found in .env."
+            
+        try:
+            from google.genai import types
+            prompt = (
+                "You are a professional transcriptionist. Transcribe the ENTIRE attached audio clip word for word. "
+                "Do NOT summarize. Do NOT stop early. Do NOT add any extra commentary or text. "
+                "Output ONLY the exact spoken words in the original language."
+            )
+            contents_payload = [
+                types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+                prompt
+            ]
+            
+            try:
+                response = self.gemini_client.models.generate_content(
+                    model="gemini-3.5-flash",
+                    contents=contents_payload
+                )
+                return response.text.strip()
+            except Exception as primary_e:
+                # Fallback to a lighter model if rate limit or quota is exhausted
+                response = self.gemini_client.models.generate_content(
+                    model="gemini-3.1-flash-lite",
+                    contents=contents_payload
+                )
+                return response.text.strip()
+                
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                return "[System] ⚠️ API-Limit erreicht. Google blockiert gerade weitere Anfragen, weil zu viele auf einmal gesendet wurden. Bitte warte etwa 1 Minute."
+            
+            # Try to extract a clean message if it's a JSON string
+            if "'message': '" in err_str:
+                start = err_str.find("'message': '") + 12
+                end = err_str.find("'", start)
+                if end > start:
+                    clean_msg = err_str[start:end]
+                    return f"[System] {clean_msg}"
+                    
+            return f"[System Error - Gemini Audio] {err_str}"
+
