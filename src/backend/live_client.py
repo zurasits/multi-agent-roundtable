@@ -35,11 +35,12 @@ class LiveAgentClient:
         
         provider = llm_provider.lower()
         
-        if provider == "gpt":
+        if provider == "gpt" and self.openai_client:
             return self._generate_gpt(system_prompt, conversation_history)
-        elif provider == "claude":
+        elif provider == "claude" and self.anthropic_client:
             return self._generate_claude(system_prompt, conversation_history)
         else:
+            # Fallback to Gemini if requested, or if GPT/Claude API keys are missing
             return self._generate_gemini(system_prompt, conversation_history)
 
     def _generate_gpt(self, system_prompt: str, history: list) -> str:
