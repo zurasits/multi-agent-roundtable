@@ -6,7 +6,7 @@ import uuid
 # Ensure backend can be imported
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step, get_next_agent
+from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step, get_next_agent, transcribe_audio_to_text
 from src.backend.demo_loader import load_demo_transcript
 from src.backend.db import update_agent_provider
 
@@ -211,10 +211,62 @@ if st.session_state.get("pending_agent_step", False):
         trigger_roundtable_step(st.session_state.session_id, live_mode=live_mode, is_user_reply=is_user_reply)
     st.rerun()
 
-user_input = st.chat_input("Type a message to inject into the roundtable...")
-if user_input:
-    submit_message(st.session_state.session_id, "live_user", user_input)
-    # Tell Streamlit to trigger the agent AFTER drawing the user message on the next run
-    st.session_state.pending_agent_step = True
-    st.session_state.is_user_reply = True
-    st.rerun()
+if "draft_audio_text" not in st.session_state:
+    st.session_state.draft_audio_text = None
+
+if st.session_state.draft_audio_text is not None:
+    with st.container(border=True):
+        st.markdown("**🎤 Audio Transkription prüfen:**")
+        edited_text = st.text_area("Korrigiere den Text falls nötig:", value=st.session_state.draft_audio_text, height=100)
+        
+        col1, col2, col3 = st.columns([2, 2, 6])
+        with col1:
+            if st.button("Senden", type="primary", use_container_width=True):
+                submit_message(st.session_state.session_id, "live_user", edited_text)
+                st.session_state.draft_audio_text = None
+                st.session_state.pending_agent_step = True
+                st.session_state.is_user_reply = True
+                st.rerun()
+        with col2:
+            if st.button("Verwerfen", use_container_width=True):
+                st.session_state.draft_audio_text = None
+                st.rerun()
+else:
+    user_input = st.chat_input("Type or record a message...", accept_audio=True)
+    if user_input:
+        message_text = None
+        is_audio = False
+        
+        # Check if user_input is a string (text) or an audio file (bytes/file-like object)
+        if isinstance(user_input, str):
+            message_text = user_input
+        else:
+            # It is a ChatInputValue object
+            text_content = getattr(user_input, "text", None) or (user_input.get("text") if hasattr(user_input, "get") else None)
+            audio_content = getattr(user_input, "audio", None) or (user_input.get("audio") if hasattr(user_input, "get") else None)
+            
+            if audio_content:
+                is_audio = True
+                with st.spinner("🎙️ Transcribing audio..."):
+                    audio_bytes = audio_content.read() if hasattr(audio_content, "read") else audio_content
+                    message_text = transcribe_audio_to_text(audio_bytes)
+                    
+                if message_text.startswith("[System"):
+                    st.error(message_text)
+                    st.stop()
+            elif text_content:
+                message_text = text_content
+
+        if message_text:
+            if is_audio:
+                st.session_state.draft_audio_text = message_text
+                st.rerun()
+            else:
+                submit_message(st.session_state.session_id, "live_user", message_text)
+                # Tell Streamlit to trigger the agent AFTER drawing the user message on the next run
+                st.session_state.pending_agent_step = True
+                st.session_state.is_user_reply = True
+                st.rerun()
+
+
+

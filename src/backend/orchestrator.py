@@ -86,3 +86,9 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False, is_user_re
     else:
         # Default mock mode
         submit_message(session_id, agent.id, f"Hello from {agent.name}. I am simulating a step.")
+
+def transcribe_audio_to_text(audio_bytes: bytes) -> str:
+    """Helper to transcribe audio input from the user using LiveAgentClient."""
+    client = LiveAgentClient()
+    return client.transcribe_audio(audio_bytes)
+

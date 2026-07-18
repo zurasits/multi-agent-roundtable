@@ -75,7 +75,16 @@ When you open the URL, you will see a clean, glassmorphic chat interface featuri
 
 ---
 
-## ✨ What's new in Version 2
+## ✨ What's new in Version 3
+
+Version 3 brings a massive accessibility and UX upgrade by introducing native voice controls!
+- **🎙️ Voice Recording (Speech-to-Text):** You can now speak directly to the agents! Just click the microphone icon in the chat input, record your message, and let the backend automatically transcribe it using the `gemini-3.5-flash` model.
+- **📝 Draft Mode for Audio:** We know AI transcriptions aren't always 100% perfect. That's why transcribed audio isn't sent immediately. Instead, it pops up in a "Draft" text box where you can review and edit the text before explicitly clicking "Senden".
+- **🔒 Safari Note:** Due to strict Apple privacy policies, microphone access in Safari requires the app to be accessed exactly via `http://localhost:8501` or over a secure `https://` connection.
+
+---
+
+## 🌟 What's new in Version 2
 
 Version 2 introduces powerful flexibility and a stunning UI overhaul:
 - **Multi-LLM Support:** Agents are no longer tied to just Gemini. Mix and match OpenAI's GPT, Anthropic's Claude, and Google's Gemini within the same roundtable discussion.
@@ -88,7 +97,8 @@ Version 2 introduces powerful flexibility and a stunning UI overhaul:
 
 To get the most out of this roundtable, follow this clear workflow:
 
-1. **Ask a Question:** Start the conversation by typing a prompt or question into the chat box.
+1. **Ask a Question:** Start the conversation by typing a prompt into the chat box, OR click the **microphone icon** to record a voice message!
+2. **Review your Audio (Optional):** If you used voice recording, review the AI-transcribed text in the Draft box, edit it if necessary, and click "Senden".
 2. **React to the Answer:** Once the first agent replies, you have two choices:
    - **Ask a follow-up question** to clarify or iterate on their response.
    - 🎯 **CRITICAL STEP:** Click the **"Trigger next agent"** button in the sidebar. This passes the baton to the second agent, allowing them to review, expand, or critique the first agent's work. **This handoff is the core goal of the project.**

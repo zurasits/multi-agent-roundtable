@@ -46,6 +46,10 @@ Allows the frontend to submit a message on behalf of a live user or an external 
 ### `trigger_roundtable_step(session_id: str) -> None`
 Instructs the backend to execute one turn of the multi-agent discussion for the specified `session_id`, invoking the respective agents.
 
+### `transcribe_audio_to_text(audio_bytes: bytes) -> str`
+Takes an audio payload (typically from the frontend microphone input), sends it to the Whisper API, and returns the transcribed text string.
+
+
 ## 4. Database Schema (SQLite)
 The persistent database must contain the following tables:
 *   `agents`: Contains `id` (TEXT PRIMARY KEY), `name` (TEXT), and `role` (TEXT).
