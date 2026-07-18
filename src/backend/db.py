@@ -10,6 +10,7 @@ class Agent:
     id: str
     name: str
     role: str
+    llm_provider: str = "gemini"
 
 @dataclass
 class Message:
@@ -31,9 +32,15 @@ def init_db():
         CREATE TABLE IF NOT EXISTS agents (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            role TEXT NOT NULL
+            role TEXT NOT NULL,
+            llm_provider TEXT DEFAULT 'gemini'
         )
     """)
+    # Auto-migrate: Add column if it doesn't exist
+    try:
+        cursor.execute("ALTER TABLE agents ADD COLUMN llm_provider TEXT DEFAULT 'gemini'")
+    except sqlite3.OperationalError:
+        pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id TEXT PRIMARY KEY,
@@ -59,10 +66,19 @@ def init_db():
 def get_all_agents() -> List[Agent]:
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, role FROM agents")
+    # Using 'SELECT *' or explicitly selecting columns
+    cursor.execute("SELECT id, name, role, llm_provider FROM agents")
     rows = cursor.fetchall()
     conn.close()
-    return [Agent(id=row["id"], name=row["name"], role=row["role"]) for row in rows]
+    # row.keys() might not exist for row_factory = sqlite3.Row in all environments but dict(row).get() works
+    return [Agent(id=row["id"], name=row["name"], role=row["role"], llm_provider=dict(row).get("llm_provider", "gemini")) for row in rows]
+
+def update_agent_provider(agent_id: str, provider: str) -> None:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE agents SET llm_provider = ? WHERE id = ?", (provider, agent_id))
+    conn.commit()
+    conn.close()
 
 def get_session_messages(session_id: str) -> List[Message]:
     conn = get_db_connection()

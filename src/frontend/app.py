@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 
 from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step, get_next_agent
 from src.backend.demo_loader import load_demo_transcript
+from src.backend.db import update_agent_provider
 
 # Page Configuration
 st.set_page_config(
@@ -56,13 +57,30 @@ st.sidebar.header("Participating Agents")
 for agent in agents:
     st.sidebar.markdown(
         f"""
-        <div class="agent-card">
+        <div class="agent-card" style="margin-bottom: 0px;">
             <strong>👤 {agent.name}</strong><br>
             <small style="color: #888888;">Role: {agent.role}</small>
         </div>
         """,
         unsafe_allow_html=True
     )
+    
+    provider_options = ["gemini", "gpt", "claude"]
+    # Handle case where llm_provider might not be in the list
+    current_index = provider_options.index(agent.llm_provider) if agent.llm_provider in provider_options else 0
+    
+    new_provider = st.sidebar.selectbox(
+        f"LLM", 
+        provider_options, 
+        index=current_index,
+        key=f"llm_sel_{agent.id}",
+        label_visibility="collapsed"
+    )
+    st.sidebar.markdown("<br>", unsafe_allow_html=True)
+    
+    if new_provider != agent.llm_provider:
+        update_agent_provider(agent.id, new_provider)
+        st.rerun()
 
 
 # Sidebar Controls
