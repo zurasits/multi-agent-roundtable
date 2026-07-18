@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 
 from src.backend.orchestrator import get_agents, get_messages, submit_message, trigger_roundtable_step, get_next_agent
 from src.backend.demo_loader import load_demo_transcript
+from src.backend.db import update_agent_provider
 
 # Page Configuration
 st.set_page_config(
@@ -16,16 +17,63 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for rich aesthetics (Glassmorphism & SLEEK layouts)
-st.markdown("""
+import time
+
+# Custom CSS for rich aesthetics
+st.markdown(f"""
 <style>
-    .agent-card {
-        padding: 10px;
-        border-radius: 10px;
-        background-color: rgba(128, 128, 128, 0.1);
-        border: 1px solid rgba(128, 128, 128, 0.2);
-        margin-bottom: 10px;
-    }
+    /* Cache Buster: {time.time()} */
+    
+    /* NUCLEAR OPTION: Force ALL inner divs of the selectbox to be transparent */
+    .stSelectbox div, 
+    [data-testid="stSelectbox"] div {{
+        background-color: transparent !important;
+        border-color: transparent !important;
+    }}
+    
+    /* NUCLEAR OPTION: Kill the red focus ring on ALL states and ALL child elements */
+    .stSelectbox div:focus,
+    .stSelectbox div:active,
+    .stSelectbox div:hover,
+    .stSelectbox div:focus-within,
+    [data-testid="stSelectbox"] div:focus,
+    [data-testid="stSelectbox"] div:active,
+    [data-testid="stSelectbox"] div:hover,
+    [data-testid="stSelectbox"] div:focus-within {{
+        box-shadow: none !important;
+        border-color: transparent !important;
+        outline: none !important;
+    }}
+    
+    /* 
+       ABSOLUTE ULTIMATE POPOVER OVERRIDE:
+       Targeting every possible class, role, and testid used by any version of Streamlit
+       for the selectbox dropdown menu to force it to #262730 (agent-card grey).
+    */
+    div[data-baseweb="popover"],
+    div[data-baseweb="menu"],
+    ul[role="listbox"],
+    div[role="listbox"],
+    [data-testid="stSelectboxVirtualDropdown"] {{
+        background-color: #262730 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }}
+    
+    /* Strip all inner backgrounds that might override it */
+    div[data-baseweb="popover"] *,
+    div[data-baseweb="menu"] *,
+    ul[role="listbox"] *,
+    div[role="listbox"] *,
+    [data-testid="stSelectboxVirtualDropdown"] * {{
+        background-color: transparent !important;
+    }}
+    
+    /* Hover effect: explicitly DARKER background ONLY for the hovered option */
+    [role="option"]:hover,
+    [role="option"]:hover * {{
+        background-color: #111115 !important;
+        cursor: pointer !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,15 +102,27 @@ agents_dict = {agent.id: agent for agent in agents}
 # Sidebar - Participating Agents & Details
 st.sidebar.header("Participating Agents")
 for agent in agents:
-    st.sidebar.markdown(
-        f"""
-        <div class="agent-card">
-            <strong>👤 {agent.name}</strong><br>
-            <small style="color: #888888;">Role: {agent.role}</small>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    with st.sidebar.container(border=True):
+        st.markdown(
+            f"**👤 {agent.name}**<br><small style='color: #888888;'>Role: {agent.role}</small>",
+            unsafe_allow_html=True
+        )
+        
+        provider_options = ["gemini", "gpt", "claude"]
+        # Handle case where llm_provider might not be in the list
+        current_index = provider_options.index(agent.llm_provider) if agent.llm_provider in provider_options else 0
+        
+        new_provider = st.selectbox(
+            f"LLM", 
+            provider_options, 
+            index=current_index,
+            key=f"llm_sel_{agent.id}",
+            label_visibility="collapsed"
+        )
+        
+        if new_provider != agent.llm_provider:
+            update_agent_provider(agent.id, new_provider)
+            st.rerun()
 
 
 # Sidebar Controls

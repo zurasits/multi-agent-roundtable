@@ -81,7 +81,7 @@ def trigger_roundtable_step(session_id: str, live_mode: bool = False, is_user_re
             history_strings.append(f"{name}: {m.content}")
             
         client = LiveAgentClient()
-        response_text = client.generate_response(agent.role, history_strings)
+        response_text = client.generate_response(agent.role, history_strings, llm_provider=agent.llm_provider)
         submit_message(session_id, agent.id, response_text)
     else:
         # Default mock mode

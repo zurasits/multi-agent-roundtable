@@ -25,9 +25,14 @@ cd multi-agent-roundtable
 ```
 
 **Set up your environment:**
-Create a `.env` file in the root directory and add your API key:
+Create a `.env` file in the root directory and add your API keys. While only Gemini is required to start, Version 2 supports multiple LLM providers:
 ```env
-GEMINI_API_KEY=your_key_here
+# Required for Live Mode
+GEMINI_API_KEY=your_gemini_key_here
+
+# Optional: Add these if you want to switch agents to GPT or Claude
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
 ```
 
 **Run the application:**
@@ -61,11 +66,21 @@ Open your web browser and navigate to the following URL:
 👉 **[http://localhost:8501](http://localhost:8501)**
 
 ### 3. Expected Result
-When you open the URL, you will see a clean chat interface featuring:
+When you open the URL, you will see a clean, glassmorphic chat interface featuring:
 - **2 Distinct AI Agents** ready to collaborate.
-- A **Live Mode** connection to Gemini.
+- 🧠 **Individual LLM Selection:** A sleek dropdown in each agent's card to switch their brain (Gemini, GPT, or Claude) on the fly!
+- A **Live Mode** connection to the AI models.
 - A **"Trigger next agent"** button on the sidebar.
 - A **"Reset Session"** button on the sidebar to clear the conversation.
+
+---
+
+## ✨ What's new in Version 2
+
+Version 2 introduces powerful flexibility and a stunning UI overhaul:
+- **Multi-LLM Support:** Agents are no longer tied to just Gemini. Mix and match OpenAI's GPT, Anthropic's Claude, and Google's Gemini within the same roundtable discussion.
+- **Sleek UI:** Completely redesigned agent cards with native, dark-mode integrated provider selection.
+- **Dynamic Fallbacks:** The system automatically checks your `.env` variables and falls back to Gemini if a selected provider's API key is missing.
 
 ---
 
